@@ -62,7 +62,7 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
     }
 }
 
-float g_cameraDistance = 64.0f;
+float g_cameraDistance = 3.0f;
 float g_cameraAngleX = 0.0f;
 
 // Scroll for zooming
@@ -233,11 +233,7 @@ void render() {
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_3D, g_voxelArray->colorTextureID);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_3D, g_voxelArray->normalTextureID);
-    setUniform(g_program, "u_voxelMap.colorTex", 0);
-    setUniform(g_program, "u_voxelMap.normalTex", 1);
-    setUniform(g_program, "u_voxelMap.size", glm::ivec3(g_voxelArray->sizeX, g_voxelArray->sizeY, g_voxelArray->sizeZ));
+    setUniform(g_program, "u_volumeTex", 0);
 
     // Render objects
     
@@ -261,7 +257,7 @@ void update(const float currentTimeInSec) {
 
     // Update the camera position
 
-    glm::vec3 targetPosition = glm::vec3(g_voxelArray->sizeX, g_voxelArray->sizeY, g_voxelArray->sizeZ) * 0.5f;
+    glm::vec3 targetPosition = glm::vec3(0.5f);
     g_camera.setTarget(targetPosition);
 
     glm::vec3 cameraOffset = glm::normalize(glm::vec3(cos(g_cameraAngleX), 0.0f, sin(g_cameraAngleX))) * (1.1f + g_cameraDistance);

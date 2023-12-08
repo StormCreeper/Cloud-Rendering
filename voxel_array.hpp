@@ -9,10 +9,8 @@ class VoxelArray {
 public:
     GLuint sizeX, sizeY, sizeZ;
     glm::vec3* colorData;
-    glm::vec3* normalData;
 
     GLuint colorTextureID;
-    GLuint normalTextureID;
 
 public:
     VoxelArray(GLuint sizeX, GLuint sizeY, GLuint sizeZ) {
@@ -20,7 +18,6 @@ public:
         this->sizeY = sizeY;
         this->sizeZ = sizeZ;
         colorData = new glm::vec3[sizeX * sizeY * sizeZ];
-        normalData = new glm::vec3[sizeX * sizeY * sizeZ];
 
         generateVoxelData();
         generateTexture();
@@ -35,10 +32,8 @@ public:
             glm::vec3 normalizedPos = (glm::vec3(x, y, z) + glm::vec3(0.5f)) / glm::vec3(sizeX, sizeY, sizeZ) * 2.0f - 1.0f;
 
             colorData[i] = glm::vec3(0.0f);
-            normalData[i] = glm::vec3(0.0f);
             if(glm::length(normalizedPos) < 1.0f) {
                 colorData[i] = glm::vec3(1.0f);
-                normalData[i] = glm::normalize(normalizedPos) * 0.5f + 0.5f;
             }
         }
     }
@@ -54,25 +49,12 @@ public:
 
         glTexImage3D(GL_TEXTURE_3D, 0, GL_RGB, sizeX, sizeY, sizeZ, 0, GL_RGB, GL_FLOAT, colorData);
         glBindTexture(GL_TEXTURE_3D, 0);
-
-        glActiveTexture(GL_TEXTURE1);
-
-        glGenTextures(1, &normalTextureID);
-        glBindTexture(GL_TEXTURE_3D, normalTextureID);
-
-        glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-        glTexImage3D(GL_TEXTURE_3D, 0, GL_RGB, sizeX, sizeY, sizeZ, 0, GL_RGB, GL_FLOAT, normalData);
-        glBindTexture(GL_TEXTURE_3D, 0);
     }
 
     ~VoxelArray() {
         delete[] colorData;
-        delete[] normalData;
 
         glDeleteTextures(1, &colorTextureID);
-        glDeleteTextures(1, &normalTextureID);
     }
 };
 
