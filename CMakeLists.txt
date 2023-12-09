@@ -19,7 +19,7 @@
 cmake_minimum_required(VERSION 3.5)
 
 SET(CMAKE_EXPORT_COMPILE_COMMANDS 1)
-SET(CMAKE_CXX_STANDARD 11)
+SET(CMAKE_CXX_STANDARD 14)
 SET(CMAKE_CXX_STANDARD_REQUIRED True)
 # add_compile_definitions(_MY_OPENGL_IS_33_)
 
@@ -39,6 +39,8 @@ set(SOURCES
   shader.hpp
   gl_includes.hpp
   voxel_array.hpp
+  gradient_noise.hpp
+  voronoi.hpp
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES})

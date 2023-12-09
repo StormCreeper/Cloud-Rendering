@@ -99,7 +99,7 @@ void main() {
 	for (float t = tmin; t < tmax; t += stepSize) {
 		vec3 p = ray.origin + ray.direction * t;
 		vec3 s = texture(u_volumeTex, p * 0.5 + 0.5).xyz;
-		absorption *= pow(1-s, vec3(1.5f));
+		absorption *= pow(1-s, vec3(0.05f));
 	}
 	
 

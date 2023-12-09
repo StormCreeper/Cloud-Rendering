@@ -4,6 +4,8 @@
 #include "gl_includes.hpp"
 #include <random>
 #include <iostream>
+#include "gradient_noise.hpp"
+#include "voronoi.hpp"
 
 class VoxelArray {
 public:
@@ -24,17 +26,17 @@ public:
     }
 
     void generateVoxelData() {
+        gnd::gradient_noise<float, 3> noise(42);
+        Voronoi voronoi {};
         for (int i = 0; i < sizeX * sizeY * sizeZ; i++) {
             GLuint x =  i % sizeX;
             GLuint y = (i / sizeX) % sizeY;
             GLuint z =  i / (sizeX * sizeY);
 
             glm::vec3 normalizedPos = (glm::vec3(x, y, z) + glm::vec3(0.5f)) / glm::vec3(sizeX, sizeY, sizeZ) * 2.0f - 1.0f;
-
-            colorData[i] = glm::vec3(0.0f);
-            if(glm::length(normalizedPos) < 1.0f) {
-                colorData[i] = glm::vec3(1.0f);
-            }
+            normalizedPos = (normalizedPos + glm::vec3(1.0f)) * 200.0f;
+            colorData[i] = glm::vec3(noise({normalizedPos.x, normalizedPos.y, normalizedPos.z}));
+            
         }
     }
 
