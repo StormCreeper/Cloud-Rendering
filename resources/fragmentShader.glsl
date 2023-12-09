@@ -9,6 +9,8 @@
 
 #define FLT_MAX 3.402823466e+38
 
+const vec3 clearColor = vec3(0.1f, 0.1f, 0.1f);
+
 out vec4 outColor;
 
 in vec2 screenPos;
@@ -35,25 +37,45 @@ struct Ray {
 
 uniform sampler3D u_volumeTex;
 
-/*float projectToCube(vec3 ro, vec3 rd) {
+void swap(inout float a, inout float b) {
+	float tmp = a;
+	a = b;
+	b = tmp;
+}
+
+bool projectToCube(vec3 ro, vec3 rd, out float tmin, out float tmax) {
 	
-	float tx1 = (0 - ro.x) / rd.x;
-	float tx2 = (map.size.x - ro.x) / rd.x;
+	tmin = (-1.0f - ro.x) / rd.x;
+	tmax = (+1.0f - ro.x) / rd.x;
+	if (tmin > tmax) swap(tmin, tmax);
 
-	float ty1 = (0 - ro.y) / rd.y;
-	float ty2 = (map.size.y - ro.y) / rd.y;
+	float tymin = (-1.0f - ro.y) / rd.y;
+	float tymax = (+1.0f - ro.y) / rd.y;
+	if (tymin > tymax) swap(tymin, tymax);
+	if ((tmin > tymax) || (tymin > tmax)) 
+        return false; 
+	if (tymin > tmin)
+		tmin = tymin;
+	if (tymax < tmax)
+		tmax = tymax;
 
-	float tz1 = (0 - ro.z) / rd.z;
-	float tz2 = (map.size.z - ro.z) / rd.z;
+	float tzmin = (-1.0f - ro.z) / rd.z;
+	float tzmax = (+1.0f - ro.z) / rd.z;
+	if (tzmin > tzmax) swap(tzmin, tzmax);
 
-	float tx = max(min(tx1, tx2), 0);
-	float ty = max(min(ty1, ty2), 0);
-	float tz = max(min(tz1, tz2), 0);
-
-	float t = max(tx, max(ty, tz));
+	if ((tmin > tzmax) || (tzmin > tmax)) 
+		return false;
+	if (tzmin > tmin)
+		tmin = tzmin;
+	if (tzmax < tmax)
+		tmax = tzmax;
 	
-	return t;
-}*/
+	return true;
+}
+
+vec3 mix(vec3 a, vec3 b, vec3 t) {
+	return a * (1.0f - t) + b * t;
+}
 
 void main() {
 	vec2 uv = screenPos;// * 2.0f - 1.0f;
@@ -65,20 +87,26 @@ void main() {
 
 	Ray ray = Ray(rayOrigin, rayDir, 0.0f, 1.0f);
 
-	int numSteps = 100;
 	float stepSize = 0.01f;
 
-	for(int i=0; i<numSteps; i++) {
-		vec3 position = ray.origin + ray.direction * ray.t;
-		vec3 color = texture(u_volumeTex, position).rgb;
+	float tmin, tmax;
 
-		ray.absorption *= pow(0.99f, 1.0f - color.r);
+	bool intersects = projectToCube(ray.origin, ray.direction, tmin, tmax);
+	if(!intersects) discard;
 
-		ray.t += stepSize;
+	vec3 absorption = vec3(1.0f);
+
+	for (float t = tmin; t < tmax; t += stepSize) {
+		vec3 p = ray.origin + ray.direction * t;
+		vec3 s = texture(u_volumeTex, p * 0.5 + 0.5).xyz;
+		absorption *= pow(1-s, vec3(1.5f));
 	}
+	
 
+	ray.absorption = pow(0.5f, ray.t - tmin);
 
-	vec3 finalColor = mix(rayDir, vec3(1.0f), ray.absorption);
+	vec3 finalColor = vec3(1.0f);
+	vec3 finalAlpha = absorption;
 
-	outColor = vec4(finalColor, 1.0f);
+	outColor = vec4(mix(finalColor, clearColor, finalAlpha), 1.0f);
 }
