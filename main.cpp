@@ -19,6 +19,34 @@
 
 #include <random>
 
+struct SimParameters {
+    float absorptionFactor;
+    float lightAbsorptionFactor;
+
+    float densityFactor;
+
+    float stepSize;
+    float lightStepSize;
+
+    int numSteps;
+    int numLightSteps;
+
+    glm::vec3 lightPosition;
+    glm::vec3 lightColor;
+};
+
+SimParameters g_simParameters = {
+    1.0f,
+    1.0f,
+    1.0f,
+    0.01f,
+    0.1f,
+    1000,
+    1000,
+    glm::vec3(0.9f, 0.9f, 0.9f),
+    glm::vec3(1.0f, 1.0f, 1.0f)
+};
+
 void reloadShaders();
 
 // Window parameters
@@ -200,6 +228,24 @@ void renderUI() {
 
     ImGui::End();
 
+    ImGui::Begin("Parameters", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+
+    ImGui::SliderFloat("Absorption factor", &g_simParameters.absorptionFactor, 0.0f, 15.0f);
+    ImGui::SliderFloat("Light absorption factor", &g_simParameters.lightAbsorptionFactor, 0.0f, 15.0f);
+
+    ImGui::SliderFloat("Density factor", &g_simParameters.densityFactor, 0.0f, 5.0f);
+
+    ImGui::SliderFloat("Step size", &g_simParameters.stepSize, 0.001f, 0.1f);
+    ImGui::SliderFloat("Light step size", &g_simParameters.lightStepSize, 0.01f, 0.5f);
+
+    ImGui::SliderInt("Num steps", &g_simParameters.numSteps, 0, 1000);
+    ImGui::SliderInt("Num light steps", &g_simParameters.numLightSteps, 0, 1000);
+
+    ImGui::SliderFloat3("Light position", &g_simParameters.lightPosition.x, -3.0f, 3.0f);
+    ImGui::ColorEdit3("Light color", &g_simParameters.lightColor.x);
+
+    ImGui::End();
+
     // End drawing here
 
     ImGui::Render();
@@ -230,6 +276,20 @@ void render() {
     setUniform(g_program, "u_cameraPosition", g_camera.getPosition());
 
     setUniform(g_program, "u_time", static_cast<float>(glfwGetTime()));
+
+    setUniform(g_program, "u_absorptionFactor", g_simParameters.absorptionFactor);
+    setUniform(g_program, "u_lightAbsorptionFactor", g_simParameters.lightAbsorptionFactor);
+
+    setUniform(g_program, "u_densityFactor", g_simParameters.densityFactor);
+
+    setUniform(g_program, "u_stepSize", g_simParameters.stepSize);
+    setUniform(g_program, "u_lightStepSize", g_simParameters.lightStepSize);
+
+    setUniform(g_program, "u_numSteps", g_simParameters.numSteps);
+    setUniform(g_program, "u_numLightSteps", g_simParameters.numLightSteps);
+
+    setUniform(g_program, "u_lightPosition", g_simParameters.lightPosition);
+    setUniform(g_program, "u_lightColor", g_simParameters.lightColor);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_3D, g_voxelArray->colorTextureID);
