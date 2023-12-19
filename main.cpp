@@ -320,7 +320,7 @@ void update(const float currentTimeInSec) {
     glm::vec3 targetPosition = glm::vec3(0.0f);
     g_camera.setTarget(targetPosition);
 
-    glm::vec3 cameraOffset = glm::normalize(glm::vec3(cos(g_cameraAngleX), 0.0f, sin(g_cameraAngleX))) * (1.1f + g_cameraDistance);
+    glm::vec3 cameraOffset = glm::normalize(glm::vec3(cos(g_cameraAngleX), 0.0f, sin(g_cameraAngleX))) * (0.3f + g_cameraDistance);
     g_camera.setPosition(targetPosition + cameraOffset);
 }
 

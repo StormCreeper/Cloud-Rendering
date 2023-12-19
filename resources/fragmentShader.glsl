@@ -86,7 +86,7 @@ float mExp(float x, float sigma) { // Beer's powder function
 }
 
 float Henyey_Greenstein(float cosTheta, float g) {
-	float denom = 1.0f + g * g + 2.0f * g * cosTheta;
+	float denom = 1.0f + g * g - 2.0f * g * cosTheta;
 	return (1.0f - g * g) / (denom * sqrt(denom) * 4.0f * PI);
 }
 
@@ -127,43 +127,9 @@ void main() {
 		return;
 	}
 
-	
-
 	float sigma = u_absorptionFactor * u_stepSize * 5.0f;
 
 	vec3 lightDir = normalize(u_lightPosition);
-
-	/*float throughputLin = 0.0f;
-	vec3 light = clearColor * 0.2f;
-
-	for (float t = tmin; t < tmax; t += stepSize) {
-		vec3 p = ray.origin + ray.direction * t;
-		float density = texture(u_volumeTex, p * 0.5 + 0.5).x;
-
-		if(density > 0.05f) {
-
-			float tminLight, tmaxLight;
-			vec3 lightAbsorption = vec3(0.0f);
-			bool intersectsLight = projectToCube(p, lightDir, tminLight, tmaxLight);
-			float lightDensity = 0.0f;
-			float lightThroughput = 0.0f;
-			if(intersectsLight) {
-				for (float tLight = tminLight; tLight < tmaxLight; tLight += lightStepSize) {
-					vec3 pLight = p + lightDir * tLight;
-					float densityLight = texture(u_volumeTex, pLight * 0.5 + 0.5).x;
-					lightDensity += densityLight;
-				}
-				
-				lightThroughput = exp(-lightDensity * u_lightAbsorptionFactor * lightStepSize);
-			}
-			float dthroughput = density;
-			throughputLin += dthroughput;
-			light += mExp(throughputLin, sigma) * sigma * dthroughput * lightThroughput * u_lightColor;
-		}
-		
-	}
-
-	float throughput = mExp(throughputLin, sigma);*/
 
 	float rayEnergy = 1.0f;
 	vec3 rayColor = vec3(0);
@@ -176,11 +142,11 @@ void main() {
 		float dEnergy = density * u_stepSize * u_absorptionFactor;
 		rayEnergy -= dEnergy;
 
-		vec3 lightEnergy = vec3(1.0f);
+		vec3 lightEnergy = vec3(0.0f);
 		float tminLight, tmaxLight;
 		bool intersectsLight = projectToCube(p, lightDir, tminLight, tmaxLight);
 
-		if(intersectsLight) {
+		if(intersectsLight && dEnergy > 0.001f) {
 			int maxLightSteps = u_numLightSteps;
 			float tLight = tminLight;
 			float accumulatedDensity = 0.0f;
@@ -191,12 +157,18 @@ void main() {
 				accumulatedDensity += dEnergyLight;
 				tLight += u_lightStepSize;
 				maxLightSteps--;
+
+				if(accumulatedDensity > 1.5f) break;
 			}
 			lightEnergy = exp(-accumulatedDensity) * u_lightColor;
-		}
 
-		float scatteringAmount = Henyey_Greenstein(dot(ray.direction, lightDir), 0.5f);
-		rayColor += lightEnergy * dEnergy;
+			if(length(lightEnergy) > 0.1f) {
+				//float scatteringAmount = Henyey_Greenstein(dot(ray.direction, lightDir), 0.5f);
+				//scatteringAmount = max(min(scatteringAmount, 1.0f), 0.0f);
+				rayColor += lightEnergy * dEnergy;
+			}
+		}
+		
 		maxSteps--;
 		t += u_stepSize;
 	}

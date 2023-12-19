@@ -25,11 +25,54 @@ public:
         generateTexture();
     }
 
+    float smin(float a, float b, float k) {
+        float h = glm::clamp(0.5 + 0.5*(a-b)/k, 0.0, 1.0);
+        return glm::mix(a, b, h) - k*h*(1.0-h);
+    }
+
     void generateVoxelData() {
         //gnd::gradient_noise<float, 3> noise(42);
         Voronoi voronoi(10, 42);
-        
+        srand(42);
+
+        glm::vec3 spheresPos[5] {};
+        for (int i = 0; i < 5; i++) {
+            spheresPos[i] = glm::vec3(rand() % (sizeX/2) + sizeX/4, rand() % (sizeY/2) + sizeY/4, rand() % (sizeZ/2) + sizeZ/4);
+        }
+        float spheresRadius[5] {};
+        for (int i = 0; i < 5; i++) {
+            spheresRadius[i] = rand() % 10 + 5;
+        }
+
         for (int i = 0; i < sizeX * sizeY * sizeZ; i++) {
+            GLuint x =  i % sizeX;
+            GLuint y = (i / sizeX) % sizeY;
+            GLuint z =  i / (sizeX * sizeY);
+
+            float dist = 1000000000.0f;
+            for (int j = 0; j < 5; j++) {
+                float d = glm::length(glm::vec3(x, y, z) - spheresPos[j]) - spheresRadius[j];
+                dist = smin(dist, d, 1.0f);
+            }
+
+            float density = -dist;
+            // Add voronoi noise
+            float frequency = 0.01f;
+            float amplitude = 5.0f;
+            for(int i=0; i<5; i++) {
+                density += amplitude * voronoi(glm::vec3(x, y, z) * frequency);
+                frequency *= 2.0f;
+                amplitude *= 0.5f;
+            }
+            //density += voronoi(glm::vec3(x, y, z) * 0.02f) * 5.0f;
+
+            density = glm::clamp(density, 0.0f, 1.0f);
+
+            colorData[i] = glm::vec3(density);
+        }
+
+        
+        /*for (int i = 0; i < sizeX * sizeY * sizeZ; i++) {
             GLuint x =  i % sizeX;
             GLuint y = (i / sizeX) % sizeY;
             GLuint z =  i / (sizeX * sizeY);
@@ -51,7 +94,7 @@ public:
             density += (1-normalizedPos.y) * 0.1f;
             colorData[i] = glm::vec3(glm::min(density, 1.0f));
             
-        }
+        }*/
     }
 
     void generateTexture() {
